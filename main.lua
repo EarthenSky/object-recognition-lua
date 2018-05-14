@@ -19,16 +19,19 @@ function love.load()
     -- Any initialization code goes after here.
     love.graphics.setFont(MAIN_FONT)  -- Init the font.
 
-    -- Init modules
+    -- Load images.
+    goat = love.graphics.newImage("images/goat.jpg")
 
+    -- Init modules
+    imageProcessor = require("imageProcessor")
 end
 
 -- Only drawing and maybe come conditional statements go here.
 function love.draw()
-
+    imageProcessor.drawImage(goat)
 end
 
--- No drawing code, Math or physics code here.
+-- No drawing code, Math or physics code goes here.
 function love.update(dt)
 
 end
