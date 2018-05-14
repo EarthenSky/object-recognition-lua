@@ -35,6 +35,7 @@ function ImageProcessor.getBatchMapFromImage(image)
     end
 
     -- Loop through each pixel.
+    -- HOW DO FOR LOOPS?
     for x in image:getWidth() do
         for y in image:getHeight() do
             readPixel(data, x, y)
@@ -42,6 +43,8 @@ function ImageProcessor.getBatchMapFromImage(image)
     end
 
     newImage = love.graphics.newImage( newData )
+
+    return newImage
 
 end
 

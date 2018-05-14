@@ -24,11 +24,13 @@ function love.load()
 
     -- Init modules
     imageProcessor = require("imageProcessor")
+
+    img = imageProcessor.getBatchMapFromImage(goat)
 end
 
 -- Only drawing and maybe come conditional statements go here.
 function love.draw()
-    imageProcessor.drawImage(goat)
+    imageProcessor.drawImage(img)
 end
 
 -- No drawing code, Math or physics code goes here.
