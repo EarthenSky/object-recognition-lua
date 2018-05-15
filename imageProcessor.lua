@@ -14,38 +14,57 @@ function ImageProcessor.drawImage(image)
     love.graphics.draw(image, imagePosition.x - image:getWidth()/4, imagePosition.y - image:getHeight()/4, 0, 0.5, 0.5)
 end
 
-function makeBatchFromPixel(data, x, y)
+function makeBatchFromPixel(oldData, x, y)
+    local pixelMatrix = {}
 
+    local batchData = love.image.newImageData( oldData:getWidth(), oldData:getHeight() )
+
+    -- Loop through each pixel.
+    for xIndex=0, oldData:getWidth()-1, 1 do
+        for yIndex=0, oldData:getHeight()-1, 1 do
+            batchData:setPixel( xIndex, yIndex, 10, 70, 200, 255 )
+        end
+    end
+
+    -- Get the first pixel.
+    --local pixel = data:getPixel(x, y)
+    --pixelMatrix[x][y] = pixel
+
+    table.insert(batchList, batchData)
+
+    gDebugText = gDebugText .. "0"
+
+    -- save the batch?
+    --love.filesystem.write("test.png", batchData)
+    --batchData:encode("png", x .. '*' .. y .. ".png" )
 end
 
 -- This function returns all the batches mashed together as an image.
 function ImageProcessor.getBatchMapFromImage(image)
-    position = {x=0, y=0}
+    local position = {x=0, y=0}
 
-    -- Create the image.
-    if key == "e" and not image:isCompressed() then
-        data = image:getData()
-
-        newData = love.image.newImageData( image:getWidth(), image:getheight())
-
-        --data:mapPixel(function(x, y, r, g, b, a) return r/2, g/2, b/2, a/2 end)
-        --image:refresh()
+    -- Is image ok? key == "e" and
+    if not image:isCompressed() then
+        gDebugText = gDebugText .. "Probably fine"
     else
-       print "Badness"
+        gDebugText = gDebugText .. "Not Ok, Badness"
     end
 
+    -- Create the new and old image data variables.
+    imgData = image:getData()
+    local newData = love.image.newImageData( image:getWidth(), image:getHeight() )
+
     -- Loop through each pixel.
-    -- HOW DO FOR LOOPS?
-    for x in image:getWidth() do
-        for y in image:getHeight() do
-            readPixel(data, x, y)
+    for x=0, image:getWidth()-1, 1 do
+        for y=0, image:getHeight()-1, 1 do
+            makeBatchFromPixel(imgData, x, y)
         end
     end
 
-    newImage = love.graphics.newImage( newData )
+    -- TODO: make the image by attaching the batches together.
+    --local newImage = love.graphics.newImage( newData )
 
     return newImage
-
 end
 
 return ImageProcessor

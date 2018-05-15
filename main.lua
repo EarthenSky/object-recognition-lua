@@ -1,10 +1,13 @@
 -- Double commented code (----) is not a note, but removed code.
 
 -- Important and Constant variables.
-SCREEN_SIZE = {x=1080/3.1, y=1920/3.1}
+SCREEN_MOD = 3.1
+SCREEN_SIZE = {x=1080/SCREEN_MOD, y=1920/SCREEN_MOD}
 
-FONT_SIZE = 48
+FONT_SIZE = 64 / SCREEN_MOD
 MAIN_FONT = love.graphics.newFont("consola.ttf", FONT_SIZE)
+
+gDebugText = ""
 
 function love.load()
     -- Images are loaded here.
@@ -20,17 +23,22 @@ function love.load()
     love.graphics.setFont(MAIN_FONT)  -- Init the font.
 
     -- Load images.
-    goat = love.graphics.newImage("images/goat.jpg")
+    goat = love.graphics.newImage("images/cookie.png")
 
-    -- Init modules
+    -- Init modules.
     imageProcessor = require("imageProcessor")
 
+    -- Start() commands.
     img = imageProcessor.getBatchMapFromImage(goat)
 end
 
 -- Only drawing and maybe come conditional statements go here.
 function love.draw()
-    imageProcessor.drawImage(img)
+    --love.graphics.setColor(255, 255, 255, 255)
+    --imageProcessor.drawImage(img)
+
+    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.print(gDebugText, 100/SCREEN_MOD, 100/SCREEN_MOD)
 end
 
 -- No drawing code, Math or physics code goes here.
