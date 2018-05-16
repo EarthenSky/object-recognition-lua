@@ -1,4 +1,5 @@
 -- Double commented code (----) is not a note, but removed code.
+-- This is love2d, v11, not 10
 
 -- Important and Constant variables.
 SCREEN_MOD = 3.1
@@ -15,7 +16,7 @@ function love.load()
     -- Set up the window.
     love.window.setMode(SCREEN_SIZE.x, SCREEN_SIZE.y, {resizable=false, vsync=true})
     love.window.setTitle("Image Recognition")
-    love.graphics.setBackgroundColor(50, 50, 50, 255)
+    love.graphics.setBackgroundColor(50/255, 50/255, 50/255, 255)
 
     -- Other Modules are loaded here.
 
@@ -23,13 +24,13 @@ function love.load()
     love.graphics.setFont(MAIN_FONT)  -- Init the font.
 
     -- Load images.
-    goat = love.graphics.newImage("images/cookie.png")
+    goatData = love.image.newImageData("images/cookie.png")
 
     -- Init modules.
     imageProcessor = require("imageProcessor")
 
-    -- Start() commands.
-    img = imageProcessor.getBatchMapFromImage(goat)
+    -- Initialization commands.
+    img = imageProcessor.getBatchMapFromImage(goatData)
 end
 
 -- Only drawing and maybe come conditional statements go here.
@@ -37,7 +38,7 @@ function love.draw()
     --love.graphics.setColor(255, 255, 255, 255)
     --imageProcessor.drawImage(img)
 
-    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(gDebugText, 100/SCREEN_MOD, 100/SCREEN_MOD)
 end
 

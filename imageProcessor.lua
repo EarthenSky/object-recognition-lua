@@ -17,12 +17,13 @@ end
 function makeBatchFromPixel(oldData, x, y)
     local pixelMatrix = {}
 
+    -- The pixel data for this batch.
     local batchData = love.image.newImageData( oldData:getWidth(), oldData:getHeight() )
 
     -- Loop through each pixel.
     for xIndex=0, oldData:getWidth()-1, 1 do
         for yIndex=0, oldData:getHeight()-1, 1 do
-            batchData:setPixel( xIndex, yIndex, 10, 70, 200, 255 )
+            batchData:setPixel( xIndex, yIndex, 10/255, 70/255, 200/255, 255/255 )
         end
     end
 
@@ -32,37 +33,35 @@ function makeBatchFromPixel(oldData, x, y)
 
     table.insert(batchList, batchData)
 
-    gDebugText = gDebugText .. "0"
+    -- save the batch
+    batchData:encode("png", "x.png")
 
-    -- save the batch?
-    --love.filesystem.write("test.png", batchData)
-    --batchData:encode("png", x .. '*' .. y .. ".png" )
 end
 
 -- This function returns all the batches mashed together as an image.
-function ImageProcessor.getBatchMapFromImage(image)
+function ImageProcessor.getBatchMapFromImage(imgData)
+    -- Reset the batch list before using it.
+    batchList = {}
+
     local position = {x=0, y=0}
 
-    -- Is image ok? key == "e" and
-    if not image:isCompressed() then
-        gDebugText = gDebugText .. "Probably fine"
-    else
-        gDebugText = gDebugText .. "Not Ok, Badness"
-    end
-
-    -- Create the new and old image data variables.
-    imgData = image:getData()
-    local newData = love.image.newImageData( image:getWidth(), image:getHeight() )
+    -- Create the image data variable for outputing the batch of batches.
+    local outData = love.image.newImageData( imgData:getWidth(), imgData:getHeight() )
 
     -- Loop through each pixel.
-    for x=0, image:getWidth()-1, 1 do
-        for y=0, image:getHeight()-1, 1 do
+    for x=0, imgData:getWidth()-1, 1 do
+        for y=0, imgData:getHeight()-1, 1 do
             makeBatchFromPixel(imgData, x, y)
         end
     end
 
+    -- Loop through all the batches.
+    for i, p in ipairs(batchList) do
+
+    end
+
     -- TODO: make the image by attaching the batches together.
-    --local newImage = love.graphics.newImage( newData )
+    --local newImage = love.graphics.newImage( outData )
 
     return newImage
 end
