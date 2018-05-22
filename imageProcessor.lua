@@ -7,7 +7,7 @@ imagePosition = {x=SCREEN_SIZE.x/2, y=SCREEN_SIZE.y/2}
 batchList = {}
 
 -- A staring that holds of all the pixels that don't need to be turned into a batch. (string)
-pixels = ""
+pixels = {}
 
 -- A list of all the pixels that don't need to be turned into a batch.
 completePixelList = {}
@@ -31,47 +31,68 @@ function checkPixelSimilarity(colourModify, colourCompare, modifier)
 end
 
 -- TODO?: change the COLOUR_SIMILARITY_MOD to be a value?
-COLOUR_SIMILARITY_MOD = 0.8  -- This mod is from the og colour.
+COLOUR_SIMILARITY_MOD = 0.60  -- This mod is from the og colour.
 
 -- This is a recursive function. pos = {x=x, y=y}
 function checkAdjacentPixels(readData, OG_COLOUR, pos)
+
     -- Exit the function if this piexl has already been added to the list.
     local check_pos = {x=-1, y=-1}
-    local last_char = '-'
+    local last_value = '-'
 
     -- Loop all the pixels in the batch.
-    for i, char in ipairs(pixels) do
-        if last_char == 'x' then
-            check_pos.x = char
-        elseif last_char == 'y' then
-            check_pos.y = char
+    for i, value in ipairs(pixels) do
 
-            -- Case: this pixel has already been put in the list.
-            if check_pos.y == pos.y and check_pos.y == pos.y then
+        if last_value == 'x' then
+            check_pos.x = value
+        elseif last_value == 'y' then
+            check_pos.y = value
+
+            --print ( tostring(check_pos.x) .. " - " .. tostring(check_pos.y) .. "vs" ..  tostring(pos.x) .. "-" .. tostring(pos.y) )
+
+            -- Check for case: this pixel has already been put in the list.
+            if check_pos.x == pos.x and check_pos.y == pos.y then
+                --print "pre-ret"
                 return  -- Stop processing this pixel.
             end
         end
 
         -- Set the last char
-        last_char = char
+        last_value = value
     end
 
     -- Find the colour of this pixel.
     local r,g,b,a = readData:getPixel(pos.x, pos.y)
     if checkPixelSimilarity(OG_COLOUR, {r=r, g=g, b=b, a=a}, COLOUR_SIMILARITY_MOD) == true then
+
+        -- This is the base condition.  Every pixel needs to do this.
+        --pixels = pixels .. pos.x .. "x" .. pos.y .. "y"
+        table.insert(pixels, 'x')
+        table.insert(pixels, pos.x)
+        table.insert(pixels, 'y')
+        table.insert(pixels, pos.y)
+
         if pos.x > 0 then
             checkAdjacentPixels( readData, OG_COLOUR, {x=pos.x-1, y=pos.y} )  -- Check left pixel.
-        elseif pos.x < SCREEN_SIZE.x-1 then
+        end
+
+        if pos.x < 49 then
             checkAdjacentPixels( readData, OG_COLOUR, {x=pos.x+1, y=pos.y} )  -- Check right pixel.
-        elseif pos.y > 0 then
+        end
+
+        if pos.y > 0 then
             checkAdjacentPixels( readData, OG_COLOUR, {x=pos.x, y=pos.y-1} )  -- Check top pixel.
-        elseif pos.y < SCREEN_SIZE.y-1 then
+        end
+
+        if pos.y < 49 then
             checkAdjacentPixels( readData, OG_COLOUR, {x=pos.x, y=pos.y+1} )  -- Check bottom pixel.
         end
+    else
+        print "bad colour ret"
+        return
     end
 
-    -- This is the base condition.  Every pixel needs to do this.
-    pixels = pixels .. pos.x .. "x" .. pos.y .. "y"
+
 end
 
 function makeBatchFromPixel(readData, x, y)
@@ -81,16 +102,16 @@ function makeBatchFromPixel(readData, x, y)
     batchData = love.image.newImageData( readData:getWidth(), readData:getHeight() )
 
     -- TODO: REMOVE THIS.
-    -- Set init pixel data?
+    -- Set init pixel data.
     for xIndex=0, batchData:getWidth()-1, 1 do
         for yIndex=0, batchData:getHeight()-1, 1 do
-            batchData:setPixel( xIndex, yIndex, 255, 0, 0, 255 )
+            batchData:setPixel( xIndex, yIndex, 255, 255, 0, 255 )
         end
     end
 
     -- Reset the pixel list before using it and Fill the pixel list
     -- with the value of the pixels that are in the batch.
-    pixels = ""
+    pixels = {}
     r,g,b,a = readData:getPixel(x, y)
     checkAdjacentPixels( readData, {r=r, g=g, b=b, a=a}, {x=x, y=y} )
 
@@ -98,24 +119,25 @@ function makeBatchFromPixel(readData, x, y)
 
     -- This converts the list into imgData.
     local pixel_pos = {x=-1, y=-1}
-    local last_char = '-'
+    local last_value = '-'
 
-    print "preset"
+    print "START"
+
     -- Loop all the pixels in the batch.
-    for i, char in ipairs(pixels) do
-        print (char)
-        if last_char == 'x' then
-            pixel_pos.x = char
-        elseif last_char == 'y' then
-            pixel_pos.y = char
+    for i, value in ipairs(pixels) do
 
-            print "set"
+        if last_value == 'x' then
+            pixel_pos.x = tonumber(value)
+
+        elseif last_value == 'y' then
+            pixel_pos.y = tonumber(value)
+
+            print ( tostring(pixel_pos.x), tostring(pixel_pos.y) )
             batchData:setPixel( pixel_pos.x, pixel_pos.y, readData:getPixel(pixel_pos.x, pixel_pos.y) )
         end
 
-        print "loop"
         -- Set the last char equal to the current char.
-        last_char = char
+        last_value = value
     end
 
     -- add batch to be processed later.
