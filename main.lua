@@ -24,7 +24,7 @@ function love.load()
     love.graphics.setFont(MAIN_FONT)  -- Init the font.
 
     -- Load images.
-    goatData = love.image.newImageData("images/cookie.png")
+    goatData = love.image.newImageData("images/mii.png")
 
     -- Init modules.
     imageProcessor = require("imageProcessor")
