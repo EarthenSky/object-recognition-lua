@@ -3,8 +3,9 @@ local ImageProcessor = {}
 -- Holds the position of the image.
 imagePosition = {x=SCREEN_SIZE.x/2, y=SCREEN_SIZE.y/2}
 
--- A list of all the batch images.
+-- A list of all the batch images and colours.
 batchList = {}
+batchColourList = {}
 
 -- A staring that holds of all the pixels that don't need to be turned into a batch. (string)
 pixels = {}
@@ -19,25 +20,19 @@ end
 
 -- Use a modifier to check if the second colour is inside the bounds of the most different modified colour permeutations.
 function checkPixelSimilarity(colourModify, colourCompare, modifier)
+    --[[
     max_similarity = modifier
-
-    --print ( tostring(max_similarity) )
 
     -- Find the value differences from the main colour of each secondary colour.
     red_diff = math.abs(colourCompare.r - colourModify.r)
     green_diff = math.abs(colourCompare.g - colourModify.g)
     blue_diff = math.abs(colourCompare.b - colourModify.b)
 
-    --print (red_diff, green_diff, blue_diff)
-
     if (red_diff + green_diff + blue_diff) < max_similarity then
-        --print "TRUTH!!!!!"
         return true
     end
+    ]]
 
-    return false
-
-    --[[
     if colourCompare.r <= colourModify.r / modifier and colourCompare.r >= colourModify.r * modifier then
         if colourCompare.g <= colourModify.g / modifier and colourCompare.g >= colourModify.g * modifier then
             if colourCompare.b <= colourModify.b / modifier and colourCompare.b >= colourModify.b * modifier then
@@ -45,12 +40,12 @@ function checkPixelSimilarity(colourModify, colourCompare, modifier)
             end
         end
     end
-    ]]
 
+    return false
 end
 
 -- TODO?: change the COLOUR_SIMILARITY_MOD to be a value?
-COLOUR_SIMILARITY_MOD = 0.85
+COLOUR_SIMILARITY_MOD = 0.80 --0.45
 
 -- This is a recursive function. pos = {x=x, y=y}
 function checkAdjacentPixels(readData, OG_COLOUR, pos)
@@ -156,12 +151,9 @@ function makeBatchFromPixel(readData, x, y)
         last_value = value
     end
 
-    --local pixelMatrix = {}
-
     -- The pixel data for this batch.
     batchData = love.image.newImageData( readData:getWidth(), readData:getHeight() )
 
-    -- TODO: REMOVE THIS.
     -- Set init pixel data.
     for xIndex=0, batchData:getWidth()-1, 1 do
         for yIndex=0, batchData:getHeight()-1, 1 do
@@ -175,8 +167,6 @@ function makeBatchFromPixel(readData, x, y)
     r,g,b,a = readData:getPixel(x, y)
     checkAdjacentPixels( readData, {r=r, g=g, b=b, a=a}, {x=x, y=y} )
 
-    --batch_pixels_list = {}
-
     -- This converts the list into imgData.
     local pixel_pos = {x=-1, y=-1}
     local last_value = '-'
@@ -189,7 +179,6 @@ function makeBatchFromPixel(readData, x, y)
         elseif last_value == 'y' then
             pixel_pos.y = tonumber(value)
 
-            --print ( tostring(pixel_pos.x), tostring(pixel_pos.y) )
             batchData:setPixel( pixel_pos.x, pixel_pos.y, readData:getPixel(pixel_pos.x, pixel_pos.y) )
         end
 
@@ -199,16 +188,19 @@ function makeBatchFromPixel(readData, x, y)
 
     -- add batch to be processed later.
     table.insert(batchList, batchData)
+    table.insert(batchColourList, {r=r, g=g, b=b, a=a})
 end
+
+-- This modifier handles how similar a colour has to be to another one to be put together.
+MASH_COLOUR_SIMILARITY_MOD = 0.7
 
 -- This function returns all the batches mashed together as an image.
 function ImageProcessor.getBatchMapFromImage(imgData)
     -- Reset the batch list before using it.
     batchList = {}
+    batchColourList = {}
 
     completePixelList = {}  -- Reset the used pixels before using them.
-
-    --local position = {x=0, y=0}
 
     -- Create the image data variable for outputing the batch of batches.
     local outData = love.image.newImageData( imgData:getWidth(), imgData:getHeight() )
@@ -216,19 +208,49 @@ function ImageProcessor.getBatchMapFromImage(imgData)
     -- Loop through each pixel.
     for x=0, imgData:getWidth()-1, 1 do
         for y=0, imgData:getHeight()-1, 1 do
-            print ("" .. x)
-            -- TODO: Activate this, but make it only make batches from unused pixels.
             makeBatchFromPixel(imgData, x, y)
         end
     end
 
-    -- Only do one batch.
-    --makeBatchFromPixel(imgData, 30, 25)
+    -- The list that holds similarly coloured batches.
+    mashedBatchList = {}  -- {d=data, c=colour (r,g,b,a)}
+
+    -- Loop through all the batches and combine them.
+    for i, data in ipairs(batchList) do
+        -- Check if this colour exists yet.  If it does exist add the batch to the colour's batch.  If not add it to the list.
+        addToList = true
+        for i2, table in ipairs(mashedBatchList) do
+            -- TODO: CHOOSE BEST FIT HERE
+            if checkPixelSimilarity(batchColourList[i], table.c, MASH_COLOUR_SIMILARITY_MOD) == true then
+                -- Place the two images.
+                for xIndex=0, table.d:getWidth()-1, 1 do
+                    for yIndex=0, table.d:getHeight()-1, 1 do
+                        r,g,b,a = table.d:getPixel( xIndex, yIndex )
+
+                        r2,g2,b2,a2 = data:getPixel( xIndex, yIndex )
+                        r2,g2,b2 = r2 * a2, g2 * a2 ,b2 * a2  -- Apply the opacity to the piexl before adding it.
+
+                        table.d:setPixel( xIndex, yIndex, r + r2, g + g2, b + b2, a )
+                    end
+                end
+
+                addToList = false
+
+                break  -- Break from for loop?
+            end
+        end
+
+        -- Add to list.
+        if addToList == true then
+            --print("insert")
+            table.insert(mashedBatchList, {d=data, c=batchColourList[i]})
+        end
+    end
 
     -- Loop through all the batches and output them.
-    for i, data in ipairs(batchList) do
+    for i, obj in ipairs(mashedBatchList) do
         print ("" .. i)
-        data:encode("png", "" .. i .. ".png")
+        obj.d:encode("png", i .. "--" .. "r" .. tonumber(obj.c.r*255) .. "g" .. tonumber(obj.c.g*255) .. "b" .. tonumber(obj.c.b*255) .. ".png")
     end
 
     -- TODO: make the batch image by attaching the batches together.
