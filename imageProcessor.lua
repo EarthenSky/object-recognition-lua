@@ -20,7 +20,7 @@ end
 
 -- Use a modifier to check if the second colour is inside the bounds of the most different modified colour permeutations.
 function checkPixelSimilarity(colourModify, colourCompare, modifier)
-    --[[
+
     max_similarity = modifier
 
     -- Find the value differences from the main colour of each secondary colour.
@@ -31,8 +31,8 @@ function checkPixelSimilarity(colourModify, colourCompare, modifier)
     if (red_diff + green_diff + blue_diff) < max_similarity then
         return true
     end
-    ]]
 
+    --[[
     if colourCompare.r <= colourModify.r / modifier and colourCompare.r >= colourModify.r * modifier then
         if colourCompare.g <= colourModify.g / modifier and colourCompare.g >= colourModify.g * modifier then
             if colourCompare.b <= colourModify.b / modifier and colourCompare.b >= colourModify.b * modifier then
@@ -40,12 +40,12 @@ function checkPixelSimilarity(colourModify, colourCompare, modifier)
             end
         end
     end
+    ]]
 
     return false
 end
 
--- TODO?: change the COLOUR_SIMILARITY_MOD to be a value?
-COLOUR_SIMILARITY_MOD = 0.80 --0.45
+COLOUR_SIMILARITY_MOD = 0.45  --0.45
 
 -- This is a recursive function. pos = {x=x, y=y}
 function checkAdjacentPixels(readData, OG_COLOUR, pos)
@@ -130,6 +130,7 @@ function checkAdjacentPixels(readData, OG_COLOUR, pos)
 end
 
 function makeBatchFromPixel(readData, x, y)
+    print (x.." x "..y)
     -- Exit the function if this pixel has already been added to completePixelList.
     local check_pos = {x=-1, y=-1}
     local last_value = '-'
@@ -171,7 +172,9 @@ function makeBatchFromPixel(readData, x, y)
     local pixel_pos = {x=-1, y=-1}
     local last_value = '-'
 
-    -- Loop all the pixels in the batch.
+    local ra,ga,ba,aa = 0,0,0,0  -- Average colour value for this batch.
+
+    -- Loop all the pixel coordanates in the batch.
     for i, value in ipairs(pixels) do
         if last_value == 'x' then
             pixel_pos.x = tonumber(value)
@@ -180,19 +183,22 @@ function makeBatchFromPixel(readData, x, y)
             pixel_pos.y = tonumber(value)
 
             batchData:setPixel( pixel_pos.x, pixel_pos.y, readData:getPixel(pixel_pos.x, pixel_pos.y) )
+
+            rt,gt,bt,at = readData:getPixel(pixel_pos.x, pixel_pos.y)  -- Temp colour values.
+            ra,ga,ba,aa = (ra + rt) / 2, (ga + gt) / 2, (ba + bt) / 2, (aa + at) / 2  -- Average the two.
         end
 
         -- Set the last char equal to the current char.
         last_value = value
     end
 
-    -- add batch to be processed later.
-    table.insert(batchList, batchData)
-    table.insert(batchColourList, {r=r, g=g, b=b, a=a})
+    -- Add batch to be processed later.
+    table.insert( batchList, batchData )
+    table.insert( batchColourList, {r=tonumber(ra), g=tonumber(ga), b=tonumber(ba), a=tonumber(aa)} )
 end
 
 -- This modifier handles how similar a colour has to be to another one to be put together.
-MASH_COLOUR_SIMILARITY_MOD = 0.7
+MASH_COLOUR_SIMILARITY_MOD = 0.2
 
 -- This function returns all the batches mashed together as an image.
 function ImageProcessor.getBatchMapFromImage(imgData)
